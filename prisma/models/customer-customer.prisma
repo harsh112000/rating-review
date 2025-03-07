@@ -1,0 +1,9 @@
+model CustomerCustomer {
+  id            String    @id @default(uuid())
+  customerId    String
+  email         String
+  phone         String
+  createdAt     DateTime  @default(now())
+  
+  customer      Customer  @relation(fields: [customerId], references: [id])
+}

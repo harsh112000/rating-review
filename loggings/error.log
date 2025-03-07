@@ -1,0 +1,2 @@
+{"level":"error","timestamp":"2025-02-25 22:39:17","msg":"Error synchronizing database: connect ETIMEDOUT"}
+{"level":"error","timestamp":"2025-03-06 22:32:31","msg":"Uncaught exception: Error: listen EADDRINUSE: address already in use :::3000"}

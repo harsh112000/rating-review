@@ -1,0 +1,13 @@
+model Feedback {
+  id            String    @id @default(uuid())
+  templateId    String
+  customerId    String
+  questionId    String
+  response      String
+  rating        Int?      // (if applicable)
+  createdAt     DateTime  @default(now())
+
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  template      Template  @relation(fields: [templateId], references: [id])
+  question      Question  @relation(fields: [questionId], references: [id])
+}

@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum Permission {
+  MANAGE_USERS          // Create, update, delete users (except ADMIN & SUPER_ADMIN by ADMIN role)
+  MANAGE_SUBSCRIPTIONS  // Manage customer subscriptions
+  MANAGE_TEMPLATES      // Manage survey templates
+  VIEW_FEEDBACKS        // View customer feedback
+  EDIT_QUESTIONS        // Edit survey questions
+  DELETE_QUESTIONS      // Delete survey questions
+}
+
+enum QuestionType {
+  RATING
+  TEXT
+  YES_NO
+  MULTIPLE_CHOICE
+}
+
+model Admin {
+  id        String  @id @default(uuid())
+  fullName  String
+  email     String  @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id          String     @id @default(uuid())
+  role        Role
+  permission  Permission
+
+  admin       Admin?     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId     String?
+}
+
+model Customer {
+  id           String          @id @default(uuid())
+  fullName     String
+  email        String          @unique
+  phone        String          @unique
+  password     String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  subscriptions Subscription[]
+  templates     Template[]
+  feedbacks     Feedback[]
+  subCustomers  CustomerCustomer[]
+}
+
+model CustomerCustomer {
+  id               String    @id @default(uuid())
+  parentCustomerId String
+  email            String
+  phone            String    @unique
+  createdAt        DateTime  @default(now())
+
+  parentCustomer   Customer  @relation(fields: [parentCustomerId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id          String    @id @default(uuid())
+  customerId  String
+  planName    String
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id         String    @id @default(uuid())
+  name       String
+  customerId String?   // Nullable, because common templates won't have a customerId
+  isCommon   Boolean   @default(false) // false = customer-specific, true = common
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  questions  Question[]
+  feedbacks  Feedback[]
+}
+
+model Question {
+  id          String        @id @default(uuid())
+  templateId  String
+  text        String
+  type        QuestionType
+  status      Int           @default(1) // 0: Inactive, 1: Active
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  template    Template  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  feedbacks   Feedback[]
+}
+
+model Feedback {
+  id          String    @id @default(uuid())
+  templateId  String
+  customerId  String
+  questionId  String
+  response    String
+  rating      Int?
+  createdAt   DateTime  @default(now())
+
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  template    Template  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
